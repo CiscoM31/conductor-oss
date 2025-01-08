@@ -78,7 +78,3 @@ jobs:
           commit: ${{ github.sha }}
           tag: ${{ steps.tag.outputs.TAG }}
           token: ${{ github.token }}
-
-
-
-
