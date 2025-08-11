@@ -25,6 +25,7 @@ import org.slf4j.LoggerFactory;
 
 import com.netflix.conductor.core.dal.ExecutionDAOFacade;
 import com.netflix.conductor.core.listener.TaskStatusListener;
+import com.netflix.conductor.metrics.Monitors;
 import com.netflix.conductor.model.TaskModel;
 
 @Singleton
@@ -221,6 +222,9 @@ public class TaskStatusPublisher implements TaskStatusListener {
 
     private void publishTaskNotification(TaskNotification taskNotification) throws IOException {
         String jsonTask = taskNotification.toJsonStringWithInputOutput();
+
+        // Measure the time for task notification
+        long startTime = System.currentTimeMillis();
         rcm.postNotification(
                 RestClientManager.NotificationType.TASK,
                 jsonTask,
@@ -228,5 +232,13 @@ public class TaskStatusPublisher implements TaskStatusListener {
                 taskNotification.getAccountMoId(),
                 taskNotification.getTaskId(),
                 null);
+        long delayMs = System.currentTimeMillis() - startTime;
+
+        // Record task notification delay metric when notification is successfully sent
+        Monitors.recordTaskNotificationDelay(
+                taskNotification.getWorkflowId(),
+                taskNotification.getTaskType(),
+                taskNotification.getTaskId(),
+                delayMs);
     }
 }
