@@ -12,7 +12,7 @@
  */
 
 /*
- * Common place to define all the version dependencies
+ * Common place to define all the version dependencies, test
  */
 ext {
     revActivation = '2.0.1'
