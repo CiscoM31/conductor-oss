@@ -49,18 +49,10 @@ dependencies {
     api "com.pgvector:pgvector:${pgVector}"
     api "org.springframework.boot:spring-boot-starter-jdbc"
 
-    // Test dependencies
-    testImplementation 'org.springframework.boot:spring-boot-starter-test'
-    testImplementation 'org.junit.jupiter:junit-jupiter'
-    testImplementation 'org.junit.platform:junit-platform-launcher'
-    testImplementation 'org.mockito:mockito-core'
+
     testImplementation "org.testcontainers:mongodb:${revTestContainer}"
     testImplementation "org.testcontainers:postgresql:${revTestContainer}"
     testImplementation "org.postgresql:postgresql:${revPostgres}"
     testImplementation "org.apache.commons:commons-compress:${revCommonsCompress}"
 
-}
-
-test {
-    useJUnitPlatform()
 }

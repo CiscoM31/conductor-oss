@@ -98,7 +98,11 @@ allprojects {
 
         testImplementation('org.springframework.boot:spring-boot-starter-test')
         testImplementation('org.springframework.boot:spring-boot-starter-log4j2')
-        testImplementation 'junit:junit'
+        // JUnit 5 platform dependencies - replaces mixed JUnit 4/5 setup
+        testImplementation 'org.junit.jupiter:junit-jupiter'
+        testImplementation 'org.junit.platform:junit-platform-launcher'
+        testImplementation 'org.mockito:mockito-core'
+        // Keep vintage engine for any legacy JUnit 4 tests
         testImplementation "org.junit.vintage:junit-vintage-engine"
         testAnnotationProcessor 'org.projectlombok:lombok:1.18.42'
 
