@@ -18,8 +18,15 @@ dependencies {
 
     implementation "javax.ws.rs:jsr311-api:${revJsr311Api}"
     implementation("org.apache.httpcomponents.client5:httpclient5:${revApacheHttpComponentsClient5}")
+    // Additional HttpComponents dependencies for Spring Boot 3.5.11 compatibility
+    implementation("org.apache.httpcomponents.core5:httpcore5:5.2.1")
+    implementation("org.apache.httpcomponents.core5:httpcore5-h2:5.2.1")
 
+    // Add runtime dependencies for Spring Boot 3.5.11 RestTemplate compatibility
     testImplementation 'org.springframework.boot:spring-boot-starter-web'
+    testRuntimeOnly("org.apache.httpcomponents.client5:httpclient5:${revApacheHttpComponentsClient5}")
+    testRuntimeOnly("org.apache.httpcomponents.core5:httpcore5:5.2.1")
+    testRuntimeOnly("org.apache.httpcomponents.core5:httpcore5-h2:5.2.1")
     testImplementation "org.testcontainers:mockserver:${revTestContainer}"
     testImplementation "org.mock-server:mockserver-client-java:${revMockServerClient}"
     testImplementation "org.bouncycastle:bcprov-jdk15on:1.70"
