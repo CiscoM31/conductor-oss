@@ -11,10 +11,18 @@
  *  specific language governing permissions and limitations under the License.
  */
 
+configurations.all {
+    resolutionStrategy {
+        force "redis.clients:jedis:${revJedis}"
+    }
+}
+
 dependencies {
     implementation project(':conductor-common')
     implementation project(':conductor-core')
-    compileOnly 'org.springframework.boot:spring-boot-starter'
+    compileOnly('org.springframework.boot:spring-boot-starter') {
+        exclude group: 'org.springframework.boot', module: 'spring-boot-starter-data-redis'
+    }
 
     implementation "redis.clients:jedis:${revJedis}"
     implementation ("io.orkes.queues:orkes-conductor-queues:${revOrkesQueues}") {

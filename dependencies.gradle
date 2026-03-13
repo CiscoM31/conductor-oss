@@ -36,7 +36,7 @@ ext {
     revJakartaAnnotation = '2.1.1'
     revJAXB = '4.0.1'
     revJAXRS = '4.0.0'
-    revJedis = '5.1.0'
+    revJedis = '3.3.0'
     revJersey = '3.1.7'
     revJerseyCommon = '3.1.7'
     revJsonPath = '2.4.0'
