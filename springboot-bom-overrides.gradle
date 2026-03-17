@@ -19,3 +19,6 @@ ext['elasticsearch.version'] = revElasticSearch7
 
 // SB brings groovy 3.0.x which is not compatible with Spock
 ext['groovy.version'] = revGroovy
+
+// Force Netty 4.1.125.Final to fix CVE GHSA-3p8m-j85q-pgmj (netty-codec)
+ext['netty.version'] = revNetty

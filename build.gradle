@@ -8,7 +8,7 @@ buildscript {
         }
     }
     dependencies {
-        classpath 'org.springframework.boot:spring-boot-gradle-plugin:3.3.5'
+        classpath 'org.springframework.boot:spring-boot-gradle-plugin:3.3.11'
         classpath 'com.diffplug.spotless:spotless-plugin-gradle:6.+'
     }
 }
@@ -21,7 +21,7 @@ plugins {
     id 'signing'
     id 'java-library'
     id "com.diffplug.spotless" version "6.25.0"
-    id 'org.springframework.boot' version '3.3.5'
+    id 'org.springframework.boot' version '3.3.11'
 }
 
 // Establish version and status
@@ -44,12 +44,12 @@ allprojects {
 
     java {
         toolchain {
-            languageVersion = JavaLanguageVersion.of(17)
+            languageVersion = JavaLanguageVersion.of(21)
         }
     }
 
-    sourceCompatibility = JavaVersion.VERSION_17
-    targetCompatibility = JavaVersion.VERSION_17
+    sourceCompatibility = JavaVersion.VERSION_21
+    targetCompatibility = JavaVersion.VERSION_21
 
     group = 'org.conductoross'
 
@@ -63,6 +63,21 @@ allprojects {
             resolutionStrategy.eachDependency { details ->
                 if (details.requested.group.startsWith('com.fasterxml.jackson.') ) {
                     details.useVersion "2.18.0"
+                }
+                // Fix CVE GHSA-3p8m-j85q-pgmj / GHSA-prj3-ccx8-p6x4 / GHSA-4g8c-wm8x-jfhw:
+                // force standard Netty artifacts to 4.1.125.Final
+                // Exclude netty-tcnative* which has its own versioning scheme
+                if (details.requested.group == 'io.netty'
+                        && !details.requested.name.startsWith('netty-tcnative')) {
+                    details.useVersion revNetty
+                }
+                // Fix CVE GHSA-vgq5-3255-v292: force kafka-clients to 3.9.1
+                if (details.requested.group == 'org.apache.kafka') {
+                    details.useVersion revKafka
+                }
+                // Fix CVE GHSA-pq2g-wx69-c263: force json-smart to 2.5.2
+                if (details.requested.group == 'net.minidev' && details.requested.name == 'json-smart') {
+                    details.useVersion '2.5.2'
                 }
             }
         }
