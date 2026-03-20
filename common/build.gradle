@@ -43,6 +43,9 @@ dependencies {
  */
 
 task protogen(dependsOn: jar, type: JavaExec) {
+    javaLauncher = javaToolchains.launcherFor {
+        languageVersion = JavaLanguageVersion.of(21)
+    }
     classpath configurations.annotationsProcessorCodegen
     mainClass = "com.netflix.conductor.annotationsprocessor.protogen.ProtoGenTask"
     args(
