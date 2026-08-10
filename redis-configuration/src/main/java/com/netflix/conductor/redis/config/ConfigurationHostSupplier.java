@@ -32,6 +32,10 @@ public class ConfigurationHostSupplier implements HostSupplier {
     private final RedisProperties properties;
     private final RedisPinger pinger;
 
+    public ConfigurationHostSupplier(RedisProperties properties) {
+        this(properties, new RedisPinger());
+    }
+
     public ConfigurationHostSupplier(RedisProperties properties, RedisPinger pinger) {
         this.properties = properties;
         this.pinger = pinger;
