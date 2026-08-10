@@ -94,10 +94,7 @@ export const AgentTaskForm = ({ task, onChange }: TaskFormProps) => {
                   placeholder="Latest"
                 />
               </Grid>
-              <Grid
-                size={{ xs: 12, md: "auto" }}
-                alignSelf="center"
-              >
+              <Grid size={{ xs: 12, md: "auto" }} alignSelf="center">
                 <Button
                   disabled={!agentName || agentName.includes("${")}
                   sx={{ fontSize: "12px" }}
@@ -279,8 +276,7 @@ export const AgentTaskForm = ({ task, onChange }: TaskFormProps) => {
             <Grid size={12}>
               <Typography variant="body2" color="text.secondary" mb={1}>
                 Use <strong>Message text</strong> above for the common case.
-                These override it for full control over the A2A message
-                payload.
+                These override it for full control over the A2A message payload.
               </Typography>
             </Grid>
             <Grid size={12}>

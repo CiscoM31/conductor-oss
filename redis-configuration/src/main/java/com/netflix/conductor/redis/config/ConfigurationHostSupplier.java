@@ -17,6 +17,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 
 import com.netflix.dyno.connectionpool.Host;
@@ -31,6 +32,11 @@ public class ConfigurationHostSupplier implements HostSupplier {
 
     private final RedisProperties properties;
     private final RedisPinger pinger;
+
+    @Autowired
+    public ConfigurationHostSupplier(RedisProperties properties) {
+        this(properties, new RedisPinger());
+    }
 
     public ConfigurationHostSupplier(RedisProperties properties, RedisPinger pinger) {
         this.properties = properties;

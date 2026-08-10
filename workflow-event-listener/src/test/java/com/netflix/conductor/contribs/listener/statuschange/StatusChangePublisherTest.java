@@ -14,7 +14,9 @@ package com.netflix.conductor.contribs.listener.statuschange;
 
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
@@ -54,6 +56,10 @@ public class StatusChangePublisherTest {
         workflow.setWorkflowDefinition(def);
         workflow.setWorkflowId(UUID.randomUUID().toString());
         workflow.setStatus(WorkflowModel.Status.RUNNING);
+        LinkedHashMap<String, Object> ioMeta = new LinkedHashMap<>();
+        ioMeta.put("DomainGroupMoId", "domain-group-mo-id");
+        ioMeta.put("AccountMoId", "account-mo-id");
+        workflow.setInput(Map.of("_ioMeta", ioMeta));
 
         restClientManager = Mockito.mock(RestClientManager.class);
         executionDAOFacade = Mockito.mock(ExecutionDAOFacade.class);
@@ -76,6 +82,8 @@ public class StatusChangePublisherTest {
                 .postNotification(
                         eq(RestClientManager.NotificationType.WORKFLOW),
                         anyString(),
+                        anyString(),
+                        anyString(),
                         eq(workflow.getWorkflowId()),
                         any());
     }
@@ -93,7 +101,8 @@ public class StatusChangePublisherTest {
         TimeUnit.MILLISECONDS.sleep(100);
 
         // Verify that no notification was posted
-        verify(restClientManager, never()).postNotification(any(), anyString(), anyString(), any());
+        verify(restClientManager, never())
+                .postNotification(any(), anyString(), anyString(), anyString(), anyString(), any());
     }
 
     @Test
@@ -112,6 +121,8 @@ public class StatusChangePublisherTest {
                 .postNotification(
                         eq(RestClientManager.NotificationType.WORKFLOW),
                         anyString(),
+                        anyString(),
+                        anyString(),
                         eq(workflow.getWorkflowId()),
                         any());
     }
@@ -128,7 +139,8 @@ public class StatusChangePublisherTest {
 
         TimeUnit.MILLISECONDS.sleep(100);
 
-        verify(restClientManager, never()).postNotification(any(), anyString(), anyString(), any());
+        verify(restClientManager, never())
+                .postNotification(any(), anyString(), anyString(), anyString(), anyString(), any());
     }
 
     @Test
@@ -146,6 +158,8 @@ public class StatusChangePublisherTest {
         verify(restClientManager, timeout(NOTIFICATION_TIMEOUT_MS).atLeastOnce())
                 .postNotification(
                         eq(RestClientManager.NotificationType.WORKFLOW),
+                        anyString(),
+                        anyString(),
                         anyString(),
                         eq(workflow.getWorkflowId()),
                         any());
@@ -167,6 +181,8 @@ public class StatusChangePublisherTest {
                 .postNotification(
                         eq(RestClientManager.NotificationType.WORKFLOW),
                         anyString(),
+                        anyString(),
+                        anyString(),
                         eq(workflow.getWorkflowId()),
                         any());
     }
@@ -187,6 +203,8 @@ public class StatusChangePublisherTest {
                 .postNotification(
                         eq(RestClientManager.NotificationType.WORKFLOW),
                         anyString(),
+                        anyString(),
+                        anyString(),
                         eq(workflow.getWorkflowId()),
                         any());
     }
@@ -205,6 +223,8 @@ public class StatusChangePublisherTest {
         verify(restClientManager, timeout(NOTIFICATION_TIMEOUT_MS).atLeastOnce())
                 .postNotification(
                         eq(RestClientManager.NotificationType.WORKFLOW),
+                        anyString(),
+                        anyString(),
                         anyString(),
                         eq(workflow.getWorkflowId()),
                         any());
@@ -225,6 +245,8 @@ public class StatusChangePublisherTest {
                 .postNotification(
                         eq(RestClientManager.NotificationType.WORKFLOW),
                         anyString(),
+                        anyString(),
+                        anyString(),
                         eq(workflow.getWorkflowId()),
                         any());
     }
@@ -243,6 +265,8 @@ public class StatusChangePublisherTest {
         verify(restClientManager, timeout(NOTIFICATION_TIMEOUT_MS).atLeastOnce())
                 .postNotification(
                         eq(RestClientManager.NotificationType.WORKFLOW),
+                        anyString(),
+                        anyString(),
                         anyString(),
                         eq(workflow.getWorkflowId()),
                         any());
@@ -264,6 +288,8 @@ public class StatusChangePublisherTest {
                 .postNotification(
                         eq(RestClientManager.NotificationType.WORKFLOW),
                         anyString(),
+                        anyString(),
+                        anyString(),
                         eq(workflow.getWorkflowId()),
                         any());
     }
@@ -281,7 +307,8 @@ public class StatusChangePublisherTest {
         TimeUnit.MILLISECONDS.sleep(100);
 
         // Verify no notifications for non-default statuses
-        verify(restClientManager, never()).postNotification(any(), anyString(), anyString(), any());
+        verify(restClientManager, never())
+                .postNotification(any(), anyString(), anyString(), anyString(), anyString(), any());
 
         // These SHOULD be published (backward-compatible defaults)
         workflow.setStatus(WorkflowModel.Status.COMPLETED);
@@ -294,6 +321,8 @@ public class StatusChangePublisherTest {
         verify(restClientManager, timeout(NOTIFICATION_TIMEOUT_MS).atLeast(2))
                 .postNotification(
                         eq(RestClientManager.NotificationType.WORKFLOW),
+                        anyString(),
+                        anyString(),
                         anyString(),
                         eq(workflow.getWorkflowId()),
                         any());
@@ -311,7 +340,8 @@ public class StatusChangePublisherTest {
         TimeUnit.MILLISECONDS.sleep(100);
 
         // Verify no notifications for non-default statuses
-        verify(restClientManager, never()).postNotification(any(), anyString(), anyString(), any());
+        verify(restClientManager, never())
+                .postNotification(any(), anyString(), anyString(), anyString(), anyString(), any());
 
         // These SHOULD be published (backward-compatible defaults)
         workflow.setStatus(WorkflowModel.Status.COMPLETED);
@@ -324,6 +354,8 @@ public class StatusChangePublisherTest {
         verify(restClientManager, timeout(NOTIFICATION_TIMEOUT_MS).atLeast(2))
                 .postNotification(
                         eq(RestClientManager.NotificationType.WORKFLOW),
+                        anyString(),
+                        anyString(),
                         anyString(),
                         eq(workflow.getWorkflowId()),
                         any());
@@ -363,6 +395,8 @@ public class StatusChangePublisherTest {
                 .postNotification(
                         eq(RestClientManager.NotificationType.WORKFLOW),
                         anyString(),
+                        anyString(),
+                        anyString(),
                         eq(workflow.getWorkflowId()),
                         any());
     }
@@ -382,6 +416,8 @@ public class StatusChangePublisherTest {
         verify(restClientManager, timeout(NOTIFICATION_TIMEOUT_MS).atLeastOnce())
                 .postNotification(
                         eq(RestClientManager.NotificationType.WORKFLOW),
+                        anyString(),
+                        anyString(),
                         anyString(),
                         eq(workflow.getWorkflowId()),
                         any());
@@ -403,6 +439,8 @@ public class StatusChangePublisherTest {
                 .postNotification(
                         eq(RestClientManager.NotificationType.WORKFLOW),
                         anyString(),
+                        anyString(),
+                        anyString(),
                         eq(workflow.getWorkflowId()),
                         any());
     }
@@ -420,6 +458,7 @@ public class StatusChangePublisherTest {
         TimeUnit.MILLISECONDS.sleep(100);
 
         // Should not publish because "running" != "RUNNING"
-        verify(restClientManager, never()).postNotification(any(), anyString(), anyString(), any());
+        verify(restClientManager, never())
+                .postNotification(any(), anyString(), anyString(), anyString(), anyString(), any());
     }
 }

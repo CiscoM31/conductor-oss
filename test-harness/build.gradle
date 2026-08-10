@@ -78,6 +78,7 @@ tasks.withType(Test)  {
 // File-storage backend integration tests (S3/Azure/GCS) require Docker. Exclude
 // from the default :test task and expose them under a dedicated task instead.
 tasks.named('test') {
+    systemProperty 'task.dowhile.max.allowed.iteration', '500'
     useJUnitPlatform {
         excludeTags 'file-storage-integration'
     }

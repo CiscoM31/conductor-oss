@@ -138,6 +138,10 @@ public class JedisProxy {
         return jedisCommands.set(key, value);
     }
 
+    public String set(String key, String value, SetParams params) {
+        return jedisCommands.set(key, value, params);
+    }
+
     public Long setnx(String key, String value) {
         return jedisCommands.setnx(key, value);
     }

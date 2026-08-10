@@ -71,6 +71,17 @@ jobs:
           echo "TAG=$TAG" >> $GITHUB_OUTPUT
           echo "Creating release: $TAG"
         id: tag
+      # Upstream now sets a project version in gradle.properties, so Gradle emits
+      # conductor-server-<version>-boot.jar while the Cisco release upload expects
+      # the historical unversioned conductor-server-boot.jar asset name.
+      - name: Normalize conductor-server JAR name
+        run: |
+          JAR="$(find server/build/libs -maxdepth 1 -type f -name 'conductor-server*boot.jar' | sort | head -n 1)"
+          test -n "$JAR"
+          if [ "$JAR" != "server/build/libs/conductor-server-boot.jar" ]; then
+            cp "$JAR" server/build/libs/conductor-server-boot.jar
+          fi
+          ls -lh server/build/libs/*boot.jar
       - name: Upload conductor-server JAR
         uses: ncipollo/release-action@v1
         with:
