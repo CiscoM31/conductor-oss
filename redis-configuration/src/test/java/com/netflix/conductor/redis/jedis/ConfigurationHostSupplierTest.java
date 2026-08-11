@@ -18,9 +18,8 @@ import org.junit.Before;
 import org.junit.Test;
 
 import com.netflix.conductor.redis.config.ConfigurationHostSupplier;
+import com.netflix.conductor.redis.config.RedisPinger;
 import com.netflix.conductor.redis.config.RedisProperties;
-import com.netflix.conductor.redis.dynoqueue.ConfigurationHostSupplier;
-import com.netflix.conductor.redis.dynoqueue.RedisPinger;
 import com.netflix.dyno.connectionpool.Host;
 
 import static org.junit.Assert.assertEquals;
