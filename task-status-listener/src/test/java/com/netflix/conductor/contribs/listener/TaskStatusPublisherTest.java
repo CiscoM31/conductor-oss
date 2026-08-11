@@ -15,6 +15,7 @@ package com.netflix.conductor.contribs.listener;
 import java.io.IOException;
 import java.lang.reflect.Field;
 import java.util.Collections;
+import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingDeque;
@@ -61,8 +62,10 @@ public class TaskStatusPublisherTest {
                 .postNotification(
                         eq(RestClientManager.NotificationType.TASK),
                         anyString(),
+                        anyString(),
+                        anyString(),
                         eq(task.getTaskId()),
-                        any());
+                        isNull());
     }
 
     @Test
@@ -77,7 +80,8 @@ public class TaskStatusPublisherTest {
 
         TimeUnit.MILLISECONDS.sleep(100);
 
-        verify(restClientManager, never()).postNotification(any(), anyString(), anyString(), any());
+        verify(restClientManager, never())
+                .postNotification(any(), anyString(), anyString(), anyString(), anyString(), any());
     }
 
     @Test
@@ -88,7 +92,9 @@ public class TaskStatusPublisherTest {
                         eq(RestClientManager.NotificationType.TASK),
                         anyString(),
                         anyString(),
-                        any());
+                        anyString(),
+                        anyString(),
+                        isNull());
 
         TaskStatusPublisher publisher =
                 new TaskStatusPublisher(
@@ -109,7 +115,9 @@ public class TaskStatusPublisherTest {
                         eq(RestClientManager.NotificationType.TASK),
                         anyString(),
                         anyString(),
-                        any());
+                        anyString(),
+                        anyString(),
+                        isNull());
     }
 
     @Test
@@ -132,8 +140,10 @@ public class TaskStatusPublisherTest {
                 .postNotification(
                         eq(RestClientManager.NotificationType.TASK),
                         anyString(),
+                        anyString(),
+                        anyString(),
                         eq(dropped.getTaskId()),
-                        any());
+                        isNull());
     }
 
     private static void setBlockingQueue(
@@ -150,6 +160,12 @@ public class TaskStatusPublisherTest {
         task.setTaskType("SIMPLE");
         task.setStatus(status);
         task.setReferenceTaskName("ref_task");
+        task.setInputData(
+                Map.of(
+                        "_ioMeta",
+                        Map.of(
+                                "DomainGroupMoId", "domain-group-mo-id",
+                                "AccountMoId", "account-mo-id")));
 
         WorkflowTask workflowTask = new WorkflowTask();
         workflowTask.setName("ref_task");
