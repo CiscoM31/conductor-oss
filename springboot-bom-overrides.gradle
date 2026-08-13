@@ -29,6 +29,9 @@ if (indexingBackend == 'elasticsearch8' || indexingBackend == 'es8') {
 
 ext['json-smart.version'] = revJsonSmart
 
+// Override Spring Boot BOM-managed Jackson to address 2026 jackson-databind CVEs.
+ext['jackson-bom.version'] = revFasterXml
+
 // Override Spring Boot BOM-managed Log4j 2 version to address CVE-2026-34478
 // (CVSS 7.5). Fixed in 2.25.4 (released 2026-04-13). Spring Boot 3.3.11 BOM
 // ships 2.23.1, so we pin all log4j-* artifacts to revLog4j2.
@@ -40,7 +43,9 @@ ext['micrometer.version'] = revMicrometer
 
 ext['netty.version'] = revNetty
 
-ext['reactor-netty.version'] = revReactor
+// Override Spring Boot BOM-managed Spring Security. Spring Security 6.5.11 is
+// the public GA fixed line listed by the vulnerability report.
+ext['spring-security.version'] = revSpringSecurity
 
 // SB brings groovy 3.0.x which is not compatible with Spock
 ext['groovy.version'] = revGroovy
