@@ -66,17 +66,15 @@ allprojects {
             resolutionStrategy.eachDependency { details ->
                 // Compat: align all com.fasterxml.jackson.* to the same version — mixed versions cause ClassNotFoundException
                 if (details.requested.group.startsWith('com.fasterxml.jackson.')) {
-                    details.useVersion "2.17.0"
+                    details.useVersion revFasterXml
                 }
                 // Compat: commons-lang3 3.18.0+ required by Testcontainers/commons-compress
                 if (details.requested.group == 'org.apache.commons' && details.requested.name == 'commons-lang3') {
                     details.useVersion "3.18.0"
                 }
                 // Force Netty components that follow the core Netty version to the fixed version.
-                if (details.requested.group == 'io.netty' && 
-                    !details.requested.name.contains('tcnative') && 
-                    !details.requested.name.contains('codec-base') &&
-                    !details.requested.name.contains('codec-compression')) {
+                if (details.requested.group == 'io.netty'
+                        && !details.requested.name.contains('tcnative')) {
                     details.useVersion revNetty
                 }
                 // Force Micrometer to prevent version downgrade that brings vulnerable Netty
@@ -94,6 +92,15 @@ allprojects {
                 // Keep grpc artifacts aligned (including grpc-netty-shaded) to avoid vulnerable transitive mixes.
                 if (details.requested.group == 'io.grpc') {
                     details.useVersion revGrpc
+                }
+                // Keep Spring Security artifacts aligned on the CVE-fixed public GA line.
+                if (details.requested.group == 'org.springframework.security') {
+                    details.useVersion revSpringSecurity
+                }
+                // GraalVM Python pulls older jdk18on Bouncy Castle artifacts into the server image.
+                if (details.requested.group == 'org.bouncycastle'
+                        && details.requested.name.endsWith('-jdk18on')) {
+                    details.useVersion revBouncyCastle
                 }
                 // Force all Log4j 2 modules (api, core, slf4j-impl, jul, web, etc.)
                 // to revLog4j2 to remediate CVE-2026-34478. This is defense-in-depth
