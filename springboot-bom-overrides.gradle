@@ -43,8 +43,6 @@ ext['micrometer.version'] = revMicrometer
 
 ext['netty.version'] = revNetty
 
-ext['reactor-netty.version'] = revReactor
-
 // Override Spring Boot BOM-managed Spring Security. Spring Security 6.5.11 is
 // the public GA fixed line listed by the vulnerability report.
 ext['spring-security.version'] = revSpringSecurity
