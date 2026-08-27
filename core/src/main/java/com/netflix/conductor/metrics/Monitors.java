@@ -468,4 +468,18 @@ public class Monitors {
     public static void recordTaskExecLogSize(int val) {
         gauge("task_exec_log_size", val);
     }
+
+    public static void recordTaskNotificationDelay(
+            String workflowId, String taskType, String taskId, long delayMs) {
+        gauge(
+                classQualifier,
+                "task_notification_delay_ms",
+                delayMs,
+                "workflowId",
+                workflowId,
+                "taskType",
+                taskType,
+                "taskId",
+                taskId);
+    }
 }
