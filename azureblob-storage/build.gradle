@@ -3,6 +3,9 @@ dependencies {
     implementation project(':conductor-common')
     implementation project(':conductor-core')
 
-    implementation "com.azure:azure-storage-blob:${revAzureStorageBlobSdk}"
+    implementation("com.azure:azure-storage-blob:${revAzureStorageBlobSdk}") {
+        exclude group: 'com.azure', module: 'azure-core-http-netty'
+    }
+    runtimeOnly "com.azure:azure-core-http-jdk-httpclient:${revAzureCoreHttpJdk}"
     implementation "org.apache.commons:commons-lang3"
 }

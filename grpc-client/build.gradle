@@ -15,7 +15,7 @@ dependencies {
     implementation project(':conductor-common')
     implementation project(':conductor-grpc')
 
-    implementation "io.grpc:grpc-netty:${revGrpc}"
+    implementation "io.grpc:grpc-netty-shaded:${revGrpc}"
     implementation "io.grpc:grpc-protobuf:${revGrpc}"
     implementation "io.grpc:grpc-stub:${revGrpc}"
     implementation "com.google.protobuf:protobuf-java:${revProtoBuf}"

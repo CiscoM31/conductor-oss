@@ -6,7 +6,7 @@ dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-web'
     implementation "com.netflix.runtime:health-api:${revHealth}"
 
-    implementation "io.projectreactor.netty:reactor-netty-http:${revReactor}"
+    implementation "io.projectreactor:reactor-core"
     implementation "org.springdoc:springdoc-openapi-starter-webmvc-ui:${revSpringDoc}"
 
     testImplementation "io.projectreactor:reactor-test:3.5.11"

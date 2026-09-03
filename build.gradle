@@ -9,6 +9,7 @@ buildscript {
     }
     dependencies {
         classpath 'org.springframework.boot:spring-boot-gradle-plugin:3.3.11'
+        classpath 'org.springframework.boot:spring-boot-gradle-plugin:3.3.11'
         classpath 'com.diffplug.spotless:spotless-plugin-gradle:6.+'
     }
 }
@@ -28,6 +29,7 @@ plugins {
 ext.githubProjectName = rootProject.name // Change if github project name is not the same as the root project's name
 
 ext["tomcat.version"] = "10.1.54"
+ext["tomcat.version"] = "10.1.54"
 
 subprojects {
     tasks.withType(Javadoc).all { enabled = false }
@@ -41,6 +43,7 @@ allprojects {
     apply plugin: 'io.spring.dependency-management'
     apply plugin: 'java-library'
     apply plugin: 'project-report'
+    apply plugin: 'jacoco'
 
     java {
         toolchain {
@@ -61,18 +64,17 @@ allprojects {
             exclude group: 'org.slf4j', module: 'slf4j-log4j12'
 
             resolutionStrategy.eachDependency { details ->
-                if (details.requested.group.startsWith('com.fasterxml.jackson.') ) {
-                    details.useVersion "2.18.0"
+                // Compat: align all com.fasterxml.jackson.* to the same version — mixed versions cause ClassNotFoundException
+                if (details.requested.group.startsWith('com.fasterxml.jackson.')) {
+                    details.useVersion revFasterXml
                 }
-                // Force commons-lang3 to 3.18.0+ for compatibility with commons-compress used by Testcontainers
+                // Compat: commons-lang3 3.18.0+ required by Testcontainers/commons-compress
                 if (details.requested.group == 'org.apache.commons' && details.requested.name == 'commons-lang3') {
                     details.useVersion "3.18.0"
                 }
                 // Force Netty components that follow the core Netty version to the fixed version.
-                if (details.requested.group == 'io.netty' && 
-                    !details.requested.name.contains('tcnative') && 
-                    !details.requested.name.contains('codec-base') &&
-                    !details.requested.name.contains('codec-compression')) {
+                if (details.requested.group == 'io.netty'
+                        && !details.requested.name.contains('tcnative')) {
                     details.useVersion revNetty
                 }
                 // Force Micrometer to prevent version downgrade that brings vulnerable Netty
@@ -83,13 +85,18 @@ allprojects {
                 if (details.requested.group == 'io.netty' && details.requested.name == 'netty-codec') {
                     details.useVersion revNetty
                 }
-                // Force Reactor Netty line for CVE remediation when BOM-managed versions lag.
-                if (details.requested.group == 'io.projectreactor.netty') {
-                    details.useVersion revReactor
-                }
                 // Keep grpc artifacts aligned (including grpc-netty-shaded) to avoid vulnerable transitive mixes.
                 if (details.requested.group == 'io.grpc') {
                     details.useVersion revGrpc
+                }
+                // Keep Spring Security artifacts aligned on the CVE-fixed public GA line.
+                if (details.requested.group == 'org.springframework.security') {
+                    details.useVersion revSpringSecurity
+                }
+                // GraalVM Python pulls older jdk18on Bouncy Castle artifacts into the server image.
+                if (details.requested.group == 'org.bouncycastle'
+                        && details.requested.name.endsWith('-jdk18on')) {
+                    details.useVersion revBouncyCastle
                 }
                 // Force all Log4j 2 modules (api, core, slf4j-impl, jul, web, etc.)
                 // to revLog4j2 to remediate CVE-2026-34478. This is defense-in-depth
@@ -112,28 +119,27 @@ allprojects {
                 }
             }
 
-            // Resolve the lz4-java capability conflict: Kafka 3.9.x pulls
-            // 'at.yawk.lz4:lz4-java' (the maintained coordinate after the
-            // original maintainer lost publish access to 'org.lz4'), while
-            // Elasticsearch 7.17.x still pulls the legacy 'org.lz4:lz4-java'.
-            // Both declare capability 'org.lz4:lz4-java', so Gradle requires
-            // an explicit selection. The two artifacts ship the same
-            // 'net.jpountz.lz4.*' classes and are drop-in compatible, so we
-            // pick the highest version (1.10.1 from at.yawk.lz4) — newer
-            // gives us upstream bug/security fixes.
-            resolutionStrategy.capabilitiesResolution.withCapability('org.lz4:lz4-java') {
-                selectHighestVersion()
+            // Security: at.yawk.lz4:lz4-java declares Gradle capability org.lz4:lz4-java in its
+            // module metadata. When lz4-java is upgraded to 1.8.1 (CVE-2025-12183), both modules
+            // claim the same capability and Gradle can't resolve the conflict automatically.
+            // Tell Gradle to always prefer the canonical org.lz4 artifact.
+            resolutionStrategy.capabilitiesResolution.withCapability('org.lz4:lz4-java') { resolution ->
+                def preferred = resolution.candidates.find { it.id.group == 'org.lz4' }
+                if (preferred) {
+                    resolution.select(preferred)
+                }
             }
         }
     }
 
     repositories {
+        mavenLocal()
         mavenCentral()
     }
 
     dependencyManagement {
         imports {
-            // dependency versions for the BOM can be found at https://docs.spring.io/spring-boot/docs/3.1.4/reference/htmlsingle/#appendix.dependency-versions
+            // dependency versions for the BOM can be found at https://docs.spring.io/spring-boot/docs/3.3.11/reference/htmlsingle/#appendix.dependency-versions
             mavenBom(SpringBootPlugin.BOM_COORDINATES)
         }
     }
@@ -157,13 +163,27 @@ allprojects {
         testImplementation "org.junit.vintage:junit-vintage-engine"
         testAnnotationProcessor 'org.projectlombok:lombok:1.18.42'
 
-        //Locks for the dependecies
+        // PINNED (#964): jettison must stay at exactly 1.5.4 — `strictly` prevents both
+        // downgrade and upgrade. No known compatible higher version has been validated.
         implementation('org.codehaus.jettison:jettison') {
             version {
                 strictly '1.5.4'
             }
         }
         implementation('org.apache.tomcat.embed:tomcat-embed-core')
+
+        // Security: minimum version floors for CVE-patched transitive dependencies.
+        constraints {
+            implementation('org.apache.tika:tika-core:3.2.2') {
+                because 'CVE-2025-66516: tika-parser-pdf-module vulnerability'
+            }
+            implementation('commons-beanutils:commons-beanutils:1.11.0') {
+                because 'CVE-2025-48734: PropertyUtilsBean enum suppression'
+            }
+            implementation('com.microsoft.sqlserver:mssql-jdbc:12.8.2.jre11') {
+                because 'CVE-2025-59250: improper input validation'
+            }
+        }
     }
     // processes additional configuration metadata json file as described here
     // https://docs.spring.io/spring-boot/docs/2.3.1.RELEASE/reference/html/appendix-configuration-metadata.html#configuration-metadata-additional-metadata
@@ -171,6 +191,8 @@ allprojects {
 
     test {
         useJUnitPlatform()
+        // Prefer provider auto-detection and ignore user-level forced client strategy pins.
+        systemProperty 'dockerconfig.source', 'autoIgnoringUserProperties'
         testLogging {
             events = ["SKIPPED", "FAILED"]
             exceptionFormat = "full"
@@ -178,6 +200,14 @@ allprojects {
             showStandardStreams = false
         }
     }
+    jacocoTestReport {
+        reports {
+            xml.required = true
+            html.required = true
+        }
+    }
+    test.finalizedBy jacocoTestReport
+
     bootJar {
         enabled = false
     }
@@ -189,6 +219,32 @@ allprojects {
         compileJava {
             options.release = 21
         }
+    }
+}
+
+// Aggregated coverage report across all subprojects.
+// Run AFTER tests: ./gradlew build jacocoAggregatedReport
+// This task does NOT trigger test execution — it only aggregates existing .exec files.
+// Aggregated coverage report across all subprojects.
+// Run AFTER tests: ./gradlew build jacocoAggregatedReport
+// This task does NOT trigger test execution — it only aggregates existing .exec files.
+task jacocoAggregatedReport(type: JacocoReport) {
+    description = 'Generates an aggregated code coverage report from existing test execution data'
+    group = 'verification'
+
+    // Need compiled classes for the report, but not test execution
+    dependsOn subprojects.collect { it.tasks.named('classes') }
+
+    def javaSubprojects = subprojects.findAll { it.plugins.hasPlugin('java') }
+    additionalSourceDirs.from(javaSubprojects.collect { it.sourceSets.main.allJava })
+    sourceDirectories.from(javaSubprojects.collect { it.sourceSets.main.allJava })
+    classDirectories.from(javaSubprojects.collect { it.sourceSets.main.output.classesDirs })
+    executionData.setFrom(fileTree(dir: rootDir, includes: ['**/build/jacoco/*.exec']))
+
+    reports {
+        xml.required = true
+        html.required = true
+        html.outputLocation = layout.buildDirectory.dir('reports/jacoco/aggregated')
     }
 }
 
