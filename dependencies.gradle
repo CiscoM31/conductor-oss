@@ -95,7 +95,7 @@ ext {
     revSpringBoot = '3.3.11'
     revBouncyCastle = '1.84'
     revSpringAI = '1.1.6'
-    revSpringFramework = '6.1.28'
+    revSpringFramework = '6.2.19'
     revJSonSchemaValidator  = '1.0.73'
     mongodb = '4.11.0'
     pgVector = '0.1.4'
