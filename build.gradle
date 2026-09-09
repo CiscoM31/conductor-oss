@@ -28,8 +28,7 @@ plugins {
 // Establish version and status
 ext.githubProjectName = rootProject.name // Change if github project name is not the same as the root project's name
 
-ext["tomcat.version"] = "10.1.54"
-ext["tomcat.version"] = "10.1.54"
+ext["tomcat.version"] = "10.1.56"
 
 subprojects {
     tasks.withType(Javadoc).all { enabled = false }
@@ -88,6 +87,15 @@ allprojects {
                 // Keep grpc artifacts aligned (including grpc-netty-shaded) to avoid vulnerable transitive mixes.
                 if (details.requested.group == 'io.grpc') {
                     details.useVersion revGrpc
+                }
+                // Force HttpCore 5 modules to the version that fixes the reported
+                // httpcore5 and httpcore5-h2 vulnerabilities.
+                if (details.requested.group == 'org.apache.httpcomponents.core5') {
+                    details.useVersion revApacheHttpComponentsCore5
+                }
+                // Keep all embedded Tomcat modules on the CVE-fixed release.
+                if (details.requested.group == 'org.apache.tomcat.embed') {
+                    details.useVersion revTomcat
                 }
                 // Keep Spring Security artifacts aligned on the CVE-fixed public GA line.
                 if (details.requested.group == 'org.springframework.security') {
@@ -170,7 +178,7 @@ allprojects {
                 strictly '1.5.4'
             }
         }
-        implementation('org.apache.tomcat.embed:tomcat-embed-core')
+        implementation("org.apache.tomcat.embed:tomcat-embed-core:${revTomcat}")
 
         // Security: minimum version floors for CVE-patched transitive dependencies.
         constraints {
