@@ -92,6 +92,7 @@ ext {
     revConductorClient = '5.0.1'
     revAzureCoreHttpJdk = '1.1.5'
     revSpringSecurity = '6.5.11'
+    revSpringBoot = '3.3.11'
     revBouncyCastle = '1.84'
     revSpringAI = '1.1.6'
     revSpringFramework = '6.1.28'
