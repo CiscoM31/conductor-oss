@@ -45,9 +45,6 @@ dependencies {
     implementation "org.testcontainers:postgresql:${revTestContainer}"
     implementation(group: 'com.rabbitmq', name: 'amqp-client'){ version{require "${revAmqpClient}"}}
 
-    //In memory
-    implementation "org.rarefiedredis.redis:redis-java:${revRarefiedRedis}"
-
 }
 
 test {
