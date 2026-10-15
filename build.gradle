@@ -28,13 +28,12 @@ plugins {
 // Establish version and status
 ext.githubProjectName = rootProject.name // Change if github project name is not the same as the root project's name
 
-ext["tomcat.version"] = "10.1.56"
-
 subprojects {
     tasks.withType(Javadoc).all { enabled = false }
 }
 
 apply from: "$rootDir/dependencies.gradle"
+ext['tomcat.version'] = revTomcat
 apply from: "$rootDir/springboot-bom-overrides.gradle"
 apply from: "$rootDir/deploy.gradle"
 
