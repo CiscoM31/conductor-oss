@@ -32,6 +32,16 @@ public class RedisPinger {
 
     private Integer waitObject = Integer.valueOf(1);
 
+    private final boolean ssl;
+
+    public RedisPinger() {
+        this(false);
+    }
+
+    public RedisPinger(boolean ssl) {
+        this.ssl = ssl;
+    }
+
     /**
      * Does a redis ping to the host. If pings returns true, this function returns true. If ping
      * fails 2 more times ping will be done. Time delay between each ping is decided with
@@ -84,7 +94,11 @@ public class RedisPinger {
             if (host.getPassword() == null) {
                 jedisPool =
                         new JedisPool(
-                                config, host.getHostName(), host.getPort(), CONNECTION_TIMEOUT);
+                                config,
+                                host.getHostName(),
+                                host.getPort(),
+                                CONNECTION_TIMEOUT,
+                                ssl);
             } else {
                 jedisPool =
                         new JedisPool(
@@ -92,7 +106,8 @@ public class RedisPinger {
                                 host.getHostName(),
                                 host.getPort(),
                                 CONNECTION_TIMEOUT,
-                                host.getPassword());
+                                host.getPassword(),
+                                ssl);
             }
             // in case of connection problem it getResource() method throws exception
             jedis = jedisPool.getResource();
