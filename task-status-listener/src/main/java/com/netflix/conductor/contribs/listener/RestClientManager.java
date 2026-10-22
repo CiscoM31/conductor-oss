@@ -12,6 +12,7 @@
  */
 package com.netflix.conductor.contribs.listener;
 
+import java.io.Closeable;
 import java.io.IOException;
 import java.io.InterruptedIOException;
 import java.net.SocketException;
@@ -32,16 +33,18 @@ import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.CloseableHttpClient;
+import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.impl.conn.PoolingHttpClientConnectionManager;
 import org.apache.http.protocol.HttpContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class RestClientManager {
+public class RestClientManager implements Closeable {
     private static final Logger logger = LoggerFactory.getLogger(RestClientManager.class);
     private StatusNotifierNotificationProperties config;
     private CloseableHttpClient client;
+    private final NotificationTransportSecurity transportSecurity;
     private String notifType;
     private String notifId;
 
@@ -53,11 +56,16 @@ public class RestClientManager {
     public RestClientManager(StatusNotifierNotificationProperties config) {
         logger.info("created RestClientManager" + System.currentTimeMillis());
         this.config = config;
+        this.transportSecurity =
+                config.isTlsEnabled() ? new JksNotificationTransportSecurity(config) : null;
         this.client = prepareClient();
     }
 
     private PoolingHttpClientConnectionManager prepareConnManager() {
-        PoolingHttpClientConnectionManager connManager = new PoolingHttpClientConnectionManager();
+        PoolingHttpClientConnectionManager connManager =
+                transportSecurity == null
+                        ? new PoolingHttpClientConnectionManager()
+                        : transportSecurity.createConnectionManager();
         connManager.setMaxTotal(config.getConnectionPoolMaxRequest());
         connManager.setDefaultMaxPerRoute(config.getConnectionPoolMaxRequestPerRoute());
         return connManager;
@@ -169,12 +177,18 @@ public class RestClientManager {
 
     // By default retries 3 times
     private CloseableHttpClient prepareClient() {
-        return HttpClients.custom()
-                .setConnectionManager(prepareConnManager())
-                .setDefaultRequestConfig(prepareRequestConfig())
-                .setRetryHandler(new CustomHttpRequestRetryHandler())
-                .setServiceUnavailableRetryStrategy(new CustomServiceUnavailableRetryStrategy())
-                .build();
+        HttpClientBuilder builder =
+                HttpClients.custom()
+                        .setConnectionManager(prepareConnManager())
+                        .setDefaultRequestConfig(prepareRequestConfig())
+                        .setRetryHandler(new CustomHttpRequestRetryHandler())
+                        .setServiceUnavailableRetryStrategy(
+                                new CustomServiceUnavailableRetryStrategy());
+        if (transportSecurity != null) {
+            // A redirect must never forward the notifier's client identity to another origin.
+            builder.disableRedirectHandling();
+        }
+        return builder.build();
     }
 
     public void postNotification(
@@ -188,6 +202,9 @@ public class RestClientManager {
         this.notifType = notifType.toString();
         notifId = id;
         String url = prepareUrl(notifType, statusNotifier);
+        if (transportSecurity != null) {
+            transportSecurity.validateTarget(url);
+        }
 
         Map<String, String> headers = new HashMap<>();
         if (config.getHeaderPrefer() != "" && config.getHeaderPreferValue() != "") {
@@ -256,5 +273,11 @@ public class RestClientManager {
             httpPost.releaseConnection(); // Release the connection gracefully so the connection can
             // be reused by connection manager
         }
+    }
+
+    /** Releases pooled notification connections when the owning application shuts down. */
+    @Override
+    public void close() throws IOException {
+        client.close();
     }
 }

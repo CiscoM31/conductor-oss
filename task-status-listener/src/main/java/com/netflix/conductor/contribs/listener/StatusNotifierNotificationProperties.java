@@ -54,6 +54,46 @@ public class StatusNotifierNotificationProperties {
 
     private int connectionPoolMaxRequestPerRoute = 3;
 
+    private boolean tlsEnabled = false;
+
+    private String tlsKeyStorePath;
+
+    private String tlsTrustStorePath;
+
+    private String tlsPasswordFilePath;
+
+    public boolean isTlsEnabled() {
+        return tlsEnabled;
+    }
+
+    public void setTlsEnabled(boolean tlsEnabled) {
+        this.tlsEnabled = tlsEnabled;
+    }
+
+    public String getTlsKeyStorePath() {
+        return tlsKeyStorePath;
+    }
+
+    public void setTlsKeyStorePath(String tlsKeyStorePath) {
+        this.tlsKeyStorePath = tlsKeyStorePath;
+    }
+
+    public String getTlsTrustStorePath() {
+        return tlsTrustStorePath;
+    }
+
+    public void setTlsTrustStorePath(String tlsTrustStorePath) {
+        this.tlsTrustStorePath = tlsTrustStorePath;
+    }
+
+    public String getTlsPasswordFilePath() {
+        return tlsPasswordFilePath;
+    }
+
+    public void setTlsPasswordFilePath(String tlsPasswordFilePath) {
+        this.tlsPasswordFilePath = tlsPasswordFilePath;
+    }
+
     public String getUrl() {
         return url;
     }
