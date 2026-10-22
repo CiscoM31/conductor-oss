@@ -71,7 +71,11 @@ public class Conductor implements ApplicationRunner {
             hostname = "localhost";
         }
 
-        String serverUrl = String.format("http://%s:%s%s", hostname, port, contextPath);
+        String scheme =
+                environment.getProperty("server.ssl.enabled", Boolean.class, false)
+                        ? "https"
+                        : "http";
+        String serverUrl = String.format("%s://%s:%s%s", scheme, hostname, port, contextPath);
         log.info("\n\n\n");
         log.info("┌────────────────────────────────────────────────────────────────────────┐");
         log.info("│                    CONDUCTOR SERVER CONFIGURATION                      │");
