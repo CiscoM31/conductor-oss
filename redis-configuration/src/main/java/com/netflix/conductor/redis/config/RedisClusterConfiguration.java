@@ -27,6 +27,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Configuration;
 
+import com.netflix.conductor.core.security.ClientTlsMaterial;
 import com.netflix.conductor.redis.jedis.JedisClusterCommands;
 import com.netflix.dyno.connectionpool.Host;
 
@@ -74,7 +75,9 @@ public class RedisClusterConfiguration extends RedisConfiguration {
         genericObjectPoolConfig.setTestWhileIdle(properties.isTestWhileIdle());
         genericObjectPoolConfig.setFairness(properties.isFairness());
 
-        ConfigurationHostSupplier hostSupplier = new ConfigurationHostSupplier(properties);
+        ClientTlsMaterial tlsMaterial = RedisClientTls.load(properties);
+        ConfigurationHostSupplier hostSupplier =
+                new ConfigurationHostSupplier(properties, new RedisPinger(properties, tlsMaterial));
         Set<HostAndPort> hosts =
                 hostSupplier.getHosts().stream()
                         .map(h -> new HostAndPort(h.getHostName(), h.getPort()))
@@ -111,6 +114,7 @@ public class RedisClusterConfiguration extends RedisConfiguration {
         if (isNotBlank(properties.getUser())) {
             configBuilder.user(properties.getUser());
         }
+        RedisClientTls.apply(configBuilder, tlsMaterial);
 
         JedisCluster clusterClient =
                 new JedisCluster(

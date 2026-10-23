@@ -20,6 +20,7 @@ import org.springframework.context.annotation.Conditional;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.stereotype.Component;
 
+import com.netflix.conductor.core.security.ClientTlsMaterial;
 import com.netflix.conductor.redis.jedis.JedisCommands;
 import com.netflix.conductor.redis.jedis.RetryingJedisCommands;
 import com.netflix.conductor.redis.jedis.UnifiedJedisCommands;
@@ -55,7 +56,10 @@ public class RedisStandaloneConfiguration extends RedisConfiguration {
     @Bean
     protected UnifiedJedis createUnifiedJedis(RedisProperties redisProperties) {
 
-        ConfigurationHostSupplier hostSupplier = new ConfigurationHostSupplier(redisProperties);
+        ClientTlsMaterial tlsMaterial = RedisClientTls.load(redisProperties);
+        ConfigurationHostSupplier hostSupplier =
+                new ConfigurationHostSupplier(
+                        redisProperties, new RedisPinger(redisProperties, tlsMaterial));
 
         // Pool config
         GenericObjectPoolConfig<Connection> poolConfig = new GenericObjectPoolConfig<>();
@@ -73,7 +77,7 @@ public class RedisStandaloneConfiguration extends RedisConfiguration {
 
         log.info(
                 "unified jedis starting conductor server using redis_standalone - use SSL? {} and max connections: {}",
-                redisProperties.isSsl(),
+                redisProperties.isSsl() || redisProperties.isMtlsEnabled(),
                 redisProperties.getMaxConnectionsPerHost());
 
         Host host = hostSupplier.getHosts().getFirst();
@@ -97,6 +101,7 @@ public class RedisStandaloneConfiguration extends RedisConfiguration {
             builder.password(host.getPassword());
         }
 
+        RedisClientTls.apply(builder, tlsMaterial);
         clientConfig = builder.build();
 
         JedisPooled pooled = new JedisPooled(poolConfig, hp, clientConfig);

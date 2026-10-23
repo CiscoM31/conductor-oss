@@ -54,7 +54,7 @@ public class StatusNotifierNotificationProperties {
 
     private int connectionPoolMaxRequestPerRoute = 3;
 
-    private boolean tlsEnabled = false;
+    private boolean mtlsEnabled = false;
 
     private String tlsKeyStorePath;
 
@@ -62,12 +62,12 @@ public class StatusNotifierNotificationProperties {
 
     private String tlsPasswordFilePath;
 
-    public boolean isTlsEnabled() {
-        return tlsEnabled;
+    public boolean isMtlsEnabled() {
+        return mtlsEnabled;
     }
 
-    public void setTlsEnabled(boolean tlsEnabled) {
-        this.tlsEnabled = tlsEnabled;
+    public void setMtlsEnabled(boolean mtlsEnabled) {
+        this.mtlsEnabled = mtlsEnabled;
     }
 
     public String getTlsKeyStorePath() {

@@ -57,7 +57,7 @@ public class RestClientManager implements Closeable {
         logger.info("created RestClientManager" + System.currentTimeMillis());
         this.config = config;
         this.transportSecurity =
-                config.isTlsEnabled() ? new JksNotificationTransportSecurity(config) : null;
+                config.isMtlsEnabled() ? new JksNotificationTransportSecurity(config) : null;
         this.client = prepareClient();
     }
 

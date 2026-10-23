@@ -150,7 +150,7 @@ final class JksNotificationTransportSecurity implements NotificationTransportSec
     private static Path requiredFile(String file, String property) throws IOException {
         if (file == null || file.isBlank()) {
             throw new IOException(
-                    "status-notifier " + property + " must be configured when TLS is enabled");
+                    "status-notifier " + property + " must be configured when mTLS is enabled");
         }
         Path path = Path.of(file);
         if (!path.isAbsolute() || !Files.isRegularFile(path) || !Files.isReadable(path)) {
