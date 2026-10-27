@@ -50,6 +50,10 @@ class RedisPropertiesTest {
         assertNull(properties.getUser());
         assertFalse(properties.isSsl());
         assertFalse(properties.isIgnoreSsl());
+        assertFalse(properties.isMtlsEnabled());
+        assertNull(properties.getTlsKeyStorePath());
+        assertNull(properties.getTlsTrustStorePath());
+        assertNull(properties.getTlsPasswordFilePath());
         assertEquals(0, properties.getDatabase());
     }
 
@@ -118,6 +122,19 @@ class RedisPropertiesTest {
         assertTrue(properties.isSsl());
         properties.setIgnoreSsl(true);
         assertTrue(properties.isIgnoreSsl());
+    }
+
+    @Test
+    void setMtlsMaterial() {
+        properties.setMtlsEnabled(true);
+        properties.setTlsKeyStorePath("/tmp/client.jks");
+        properties.setTlsTrustStorePath("/tmp/trust.jks");
+        properties.setTlsPasswordFilePath("/tmp/store-password");
+
+        assertTrue(properties.isMtlsEnabled());
+        assertEquals("/tmp/client.jks", properties.getTlsKeyStorePath());
+        assertEquals("/tmp/trust.jks", properties.getTlsTrustStorePath());
+        assertEquals("/tmp/store-password", properties.getTlsPasswordFilePath());
     }
 
     @Test
