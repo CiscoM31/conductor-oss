@@ -83,7 +83,7 @@ public class RedisSentinelConfiguration extends RedisConfiguration {
                 "Starting conductor server using redis_sentinel, master={}, sentinels={}, SSL={}",
                 masterName,
                 sentinels,
-                redisProperties.isSsl());
+                redisProperties.isSsl() || redisProperties.isMtlsEnabled());
 
         JedisClientConfig masterConfig = createMasterClientConfig(redisProperties, password);
         JedisClientConfig sentinelConfig = createSentinelClientConfig(redisProperties, password);
@@ -115,6 +115,8 @@ public class RedisSentinelConfiguration extends RedisConfiguration {
                         .connectionTimeoutMillis(30_000)
                         .socketTimeoutMillis(30_000)
                         .ssl(redisProperties.isSsl());
+
+        RedisClientTls.apply(builder, RedisClientTls.load(redisProperties));
 
         if (redisProperties.isSsl() && redisProperties.isIgnoreSsl()) {
             try {

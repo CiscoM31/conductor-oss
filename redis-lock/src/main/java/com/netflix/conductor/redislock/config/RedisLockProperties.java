@@ -29,6 +29,46 @@ public class RedisLockProperties {
     /** The password for redis authentication */
     private String serverPassword = null;
 
+    private boolean mtlsEnabled = false;
+
+    private String tlsKeyStorePath;
+
+    private String tlsTrustStorePath;
+
+    private String tlsPasswordFilePath;
+
+    public boolean isMtlsEnabled() {
+        return mtlsEnabled;
+    }
+
+    public void setMtlsEnabled(boolean mtlsEnabled) {
+        this.mtlsEnabled = mtlsEnabled;
+    }
+
+    public String getTlsKeyStorePath() {
+        return tlsKeyStorePath;
+    }
+
+    public void setTlsKeyStorePath(String tlsKeyStorePath) {
+        this.tlsKeyStorePath = tlsKeyStorePath;
+    }
+
+    public String getTlsTrustStorePath() {
+        return tlsTrustStorePath;
+    }
+
+    public void setTlsTrustStorePath(String tlsTrustStorePath) {
+        this.tlsTrustStorePath = tlsTrustStorePath;
+    }
+
+    public String getTlsPasswordFilePath() {
+        return tlsPasswordFilePath;
+    }
+
+    public void setTlsPasswordFilePath(String tlsPasswordFilePath) {
+        this.tlsPasswordFilePath = tlsPasswordFilePath;
+    }
+
     /** The master server name used by Redis Sentinel servers and master change monitoring task */
     private String serverMasterName = "master";
 

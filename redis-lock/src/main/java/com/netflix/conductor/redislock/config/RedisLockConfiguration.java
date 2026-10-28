@@ -12,9 +12,12 @@
  */
 package com.netflix.conductor.redislock.config;
 
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.Arrays;
 
 import org.redisson.Redisson;
+import org.redisson.config.BaseConfig;
 import org.redisson.config.Config;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -23,6 +26,7 @@ import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
+import com.netflix.conductor.core.security.ClientTlsMaterial;
 import com.netflix.conductor.core.sync.Lock;
 import com.netflix.conductor.redislock.config.RedisLockProperties.REDIS_SERVER_TYPE;
 import com.netflix.conductor.redislock.lock.RedisLock;
@@ -53,57 +57,107 @@ public class RedisLockConfiguration {
         String redisServerPassword = properties.getServerPassword();
         String masterName = properties.getServerMasterName();
 
+        ClientTlsMaterial tlsMaterial = null;
+        if (properties.isMtlsEnabled()) {
+            requireTlsAddresses(redisServerAddress, redisServerType);
+            tlsMaterial =
+                    ClientTlsMaterial.loadJks(
+                            properties.getTlsKeyStorePath(),
+                            properties.getTlsTrustStorePath(),
+                            properties.getTlsPasswordFilePath());
+        }
+
         Config redisConfig = new Config();
         if (properties.getNumNettyThreads() != null && properties.getNumNettyThreads() > 0) {
             redisConfig.setNettyThreads(properties.getNumNettyThreads());
         }
 
         int connectionTimeout = 10000;
+        BaseConfig<?> serverConfig;
         switch (redisServerType) {
             case SINGLE:
                 LOGGER.info("Setting up Redis Single Server for RedisLockConfiguration");
-                redisConfig
-                        .useSingleServer()
-                        .setAddress(redisServerAddress)
-                        .setUsername(redisServerUsername)
-                        .setPassword(redisServerPassword)
-                        .setTimeout(connectionTimeout)
-                        .setDnsMonitoringInterval(properties.getDnsMonitoringInterval());
+                serverConfig =
+                        redisConfig
+                                .useSingleServer()
+                                .setAddress(redisServerAddress)
+                                .setUsername(redisServerUsername)
+                                .setPassword(redisServerPassword)
+                                .setTimeout(connectionTimeout)
+                                .setDnsMonitoringInterval(properties.getDnsMonitoringInterval());
                 break;
             case CLUSTER:
                 LOGGER.info("Setting up Redis Cluster for RedisLockConfiguration");
-                redisConfig
-                        .useClusterServers()
-                        .setScanInterval(2000) // cluster state scan interval in milliseconds
-                        .addNodeAddress(redisServerAddress.split(","))
-                        .setUsername(redisServerUsername)
-                        .setPassword(redisServerPassword)
-                        .setTimeout(connectionTimeout)
-                        .setSlaveConnectionMinimumIdleSize(
-                                properties.getClusterReplicaConnectionMinIdleSize())
-                        .setSlaveConnectionPoolSize(
-                                properties.getClusterReplicaConnectionPoolSize())
-                        .setMasterConnectionMinimumIdleSize(
-                                properties.getClusterPrimaryConnectionMinIdleSize())
-                        .setMasterConnectionPoolSize(
-                                properties.getClusterPrimaryConnectionPoolSize())
-                        .setDnsMonitoringInterval(properties.getDnsMonitoringInterval());
+                serverConfig =
+                        redisConfig
+                                .useClusterServers()
+                                .setScanInterval(
+                                        2000) // cluster state scan interval in milliseconds
+                                .addNodeAddress(redisServerAddress.split(","))
+                                .setUsername(redisServerUsername)
+                                .setPassword(redisServerPassword)
+                                .setTimeout(connectionTimeout)
+                                .setSlaveConnectionMinimumIdleSize(
+                                        properties.getClusterReplicaConnectionMinIdleSize())
+                                .setSlaveConnectionPoolSize(
+                                        properties.getClusterReplicaConnectionPoolSize())
+                                .setMasterConnectionMinimumIdleSize(
+                                        properties.getClusterPrimaryConnectionMinIdleSize())
+                                .setMasterConnectionPoolSize(
+                                        properties.getClusterPrimaryConnectionPoolSize())
+                                .setDnsMonitoringInterval(properties.getDnsMonitoringInterval());
                 break;
             case SENTINEL:
                 LOGGER.info("Setting up Redis Sentinel Servers for RedisLockConfiguration");
-                redisConfig
-                        .useSentinelServers()
-                        .setScanInterval(2000)
-                        .setMasterName(masterName)
-                        .addSentinelAddress(redisServerAddress.split(";"))
-                        .setUsername(redisServerUsername)
-                        .setPassword(redisServerPassword)
-                        .setTimeout(connectionTimeout)
-                        .setDnsMonitoringInterval(properties.getDnsMonitoringInterval());
+                serverConfig =
+                        redisConfig
+                                .useSentinelServers()
+                                .setScanInterval(2000)
+                                .setMasterName(masterName)
+                                .addSentinelAddress(redisServerAddress.split(";"))
+                                .setUsername(redisServerUsername)
+                                .setPassword(redisServerPassword)
+                                .setTimeout(connectionTimeout)
+                                .setDnsMonitoringInterval(properties.getDnsMonitoringInterval());
                 break;
+            default:
+                throw new IllegalStateException("Unsupported Redis lock server type");
+        }
+
+        if (tlsMaterial != null) {
+            // Netty builds its own TLS context, so JVM-wide keyStore properties are insufficient.
+            serverConfig.setSslKeyManagerFactory(tlsMaterial.getKeyManagerFactory());
+            serverConfig.setSslTrustManagerFactory(tlsMaterial.getTrustManagerFactory());
+            serverConfig.setSslEnableEndpointIdentification(true);
+            serverConfig.setSslProtocols(new String[] {"TLSv1.3", "TLSv1.2"});
         }
 
         return (Redisson) Redisson.create(redisConfig);
+    }
+
+    private static void requireTlsAddresses(String addresses, REDIS_SERVER_TYPE serverType) {
+        if (addresses == null || addresses.isBlank()) {
+            throw new IllegalStateException(
+                    "conductor.redis-lock.mtlsEnabled requires rediss:// server addresses");
+        }
+        String delimiter = serverType == REDIS_SERVER_TYPE.SENTINEL ? ";" : ",";
+        for (String address : addresses.split(delimiter, -1)) {
+            final URI uri;
+            try {
+                uri = new URI(address.trim());
+            } catch (URISyntaxException e) {
+                throw new IllegalStateException("Invalid Redis lock mTLS server address");
+            }
+            if (!"rediss".equalsIgnoreCase(uri.getScheme())
+                    || uri.getHost() == null
+                    || uri.getRawUserInfo() != null
+                    || uri.getRawFragment() != null
+                    || uri.getPort() == 0
+                    || uri.getPort() > 65535) {
+                throw new IllegalStateException(
+                        "conductor.redis-lock.mtlsEnabled requires rediss:// server addresses without user info or a fragment");
+            }
+        }
     }
 
     @Bean

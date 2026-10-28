@@ -17,8 +17,11 @@ import org.slf4j.LoggerFactory;
 import org.springframework.util.backoff.BackOffExecution;
 import org.springframework.util.backoff.ExponentialBackOff;
 
+import com.netflix.conductor.core.security.ClientTlsMaterial;
 import com.netflix.dyno.connectionpool.Host;
 
+import redis.clients.jedis.DefaultJedisClientConfig;
+import redis.clients.jedis.HostAndPort;
 import redis.clients.jedis.Jedis;
 import redis.clients.jedis.JedisPool;
 import redis.clients.jedis.JedisPoolConfig;
@@ -31,6 +34,24 @@ public class RedisPinger {
     private static int MAX_RETRY_COUNT = 3;
 
     private Integer waitObject = Integer.valueOf(1);
+
+    private final ClientTlsMaterial tlsMaterial;
+
+    private final String user;
+
+    public RedisPinger() {
+        this.tlsMaterial = null;
+        this.user = null;
+    }
+
+    public RedisPinger(RedisProperties properties) {
+        this(properties, RedisClientTls.load(properties));
+    }
+
+    RedisPinger(RedisProperties properties, ClientTlsMaterial tlsMaterial) {
+        this.tlsMaterial = tlsMaterial;
+        this.user = properties.getUser();
+    }
 
     /**
      * Does a redis ping to the host. If pings returns true, this function returns true. If ping
@@ -81,7 +102,22 @@ public class RedisPinger {
             // set the number of connections to 1 to limit resource usage
             config.setMinIdle(1);
             config.setMaxTotal(1);
-            if (host.getPassword() == null) {
+            if (tlsMaterial != null) {
+                DefaultJedisClientConfig.Builder clientConfig =
+                        DefaultJedisClientConfig.builder()
+                                .connectionTimeoutMillis(CONNECTION_TIMEOUT)
+                                .socketTimeoutMillis(CONNECTION_TIMEOUT)
+                                .password(host.getPassword());
+                if (user != null && !user.isBlank()) {
+                    clientConfig.user(user);
+                }
+                RedisClientTls.apply(clientConfig, tlsMaterial);
+                jedisPool =
+                        new JedisPool(
+                                config,
+                                new HostAndPort(host.getHostName(), host.getPort()),
+                                clientConfig.build());
+            } else if (host.getPassword() == null) {
                 jedisPool =
                         new JedisPool(
                                 config, host.getHostName(), host.getPort(), CONNECTION_TIMEOUT);

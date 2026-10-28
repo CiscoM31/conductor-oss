@@ -35,7 +35,7 @@ public class ConfigurationHostSupplier implements HostSupplier {
 
     @Autowired
     public ConfigurationHostSupplier(RedisProperties properties) {
-        this(properties, new RedisPinger());
+        this(properties, new RedisPinger(properties));
     }
 
     public ConfigurationHostSupplier(RedisProperties properties, RedisPinger pinger) {
